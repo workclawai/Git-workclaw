@@ -1,0 +1,2476 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🎮 潮流弹球</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;900&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+            font-family: 'Poppins', sans-serif;
+            overflow: hidden;
+        }
+        #gameContainer {
+            position: relative;
+        }
+        canvas {
+            display: block;
+            background: #0d0d1a;
+            border-radius: 20px;
+            box-shadow: 0 0 50px rgba(102, 126, 234, 0.5), 0 0 100px rgba(118, 75, 162, 0.3);
+        }
+        #gameMessage {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 64px;
+            font-weight: 900;
+            text-align: center;
+            display: none;
+            color: #fff;
+            text-shadow: 0 0 20px rgba(255, 255, 255, 0.5), 0 0 40px rgba(102, 126, 234, 0.8);
+            letter-spacing: 4px;
+        }
+        #restartBtn {
+            position: absolute;
+            padding: 18px 50px;
+            font-size: 24px;
+            font-weight: 700;
+            color: white;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            transition: all 0.3s ease;
+            font-family: 'Poppins', sans-serif;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            top: 65%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: linear-gradient(135deg, #f093fb, #f5576c);
+            display: none;
+        }
+        #restartBtn:hover {
+            transform: translateX(-50%) scale(1.1);
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.4);
+        }
+        #startBtn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 12px 25px rgba(0, 0, 0, 0.4);
+        }
+        #paddleSelector {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px);
+            padding: 30px;
+            border-radius: 30px;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        #paddleSelector h2 {
+            color: #fff;
+            font-size: 28px;
+            font-weight: 900;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            text-shadow: 0 0 20px rgba(255, 255, 255, 0.5);
+        }
+        #paddleOptions {
+            display: flex;
+            gap: 20px;
+        }
+        .paddleOption {
+            width: 120px;
+            height: 90px;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 3px solid transparent;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            font-weight: 700;
+            font-size: 14px;
+            text-transform: uppercase;
+        }
+        .paddleOption:hover {
+            transform: scale(1.1);
+            border-color: #fff;
+        }
+        .paddleOption.neon {
+            background: linear-gradient(135deg, #00f260, #0575e6);
+        }
+        .paddleOption.cyber {
+            background: linear-gradient(135deg, #f857a6, #ff5858);
+        }
+        .paddleOption.cosmic {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+        }
+        .paddleOption.pastel {
+            background: linear-gradient(135deg, #a8e063, #56ab2f);
+        }
+        .hidden { display: none !important; }
+    </style>
+</head>
+<body>
+    <div id="gameContainer">
+        <canvas id="gameCanvas" width="1000" height="800"></canvas>
+        
+        <div id="paddleSelector">
+            <h2>选择你的挡板</h2>
+            <div id="paddleOptions">
+                <div class="paddleOption neon" data-style="neon">
+                    <div style="font-size: 30px;">⚡</div>
+                    霓虹
+                </div>
+                <div class="paddleOption cyber" data-style="cyber">
+                    <div style="font-size: 30px;">🤖</div>
+                    赛博
+                </div>
+                <div class="paddleOption cosmic" data-style="cosmic">
+                    <div style="font-size: 30px;">🌌</div>
+                    宇宙
+                </div>
+                <div class="paddleOption pastel" data-style="pastel">
+                    <div style="font-size: 30px;">🌸</div>
+                    糖果
+                </div>
+            </div>
+            <h2 style="margin-top: 15px;">选择游戏主题</h2>
+            <div id="themeOptions" style="display: flex; gap: 15px; flex-wrap: wrap; justify-content: center; max-width: 800px;">
+                <div class="paddleOption" data-theme="emoji" style="background: linear-gradient(135deg, #f093fb, #f5576c); width: 120px; height: 90px; font-size: 14px;">
+                    <div style="font-size: 26px;">😀</div>
+                    Emoji
+                </div>
+                <div class="paddleOption" data-theme="fruit" style="background: linear-gradient(135deg, #fa709a, #fee140); width: 120px; height: 90px; font-size: 14px;">
+                    <div style="font-size: 26px;">🍎</div>
+                    水果
+                </div>
+                <div class="paddleOption" data-theme="veggie" style="background: linear-gradient(135deg, #4facfe, #00f2fe); width: 120px; height: 90px; font-size: 14px;">
+                    <div style="font-size: 26px;">🥕</div>
+                    蔬菜
+                </div>
+                <div class="paddleOption" data-theme="animal" style="background: linear-gradient(135deg, #a8edea, #fed6e3); color: #333; width: 120px; height: 90px; font-size: 14px;">
+                    <div style="font-size: 26px;">🐱</div>
+                    动物
+                </div>
+                <div class="paddleOption" data-theme="labubu" style="background: linear-gradient(135deg, #667eea, #764ba2); width: 120px; height: 90px; font-size: 14px;">
+                    <div style="font-size: 26px;">👹</div>
+                    拉布布
+                </div>
+                <div class="paddleOption" data-theme="goose" style="background: linear-gradient(135deg, #f093fb, #f5576c); width: 120px; height: 90px; font-size: 14px;">
+                    <div style="font-size: 26px;">🦢</div>
+                    大鹅
+                </div>
+            </div>
+            <button id="startBtn" style="margin-top: 15px; padding: 12px 40px; font-size: 18px; font-weight: 700; color: white; border: none; border-radius: 25px; cursor: pointer; box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3); transition: all 0.3s ease; font-family: 'Poppins', sans-serif; text-transform: uppercase; letter-spacing: 1px; background: linear-gradient(135deg, #667eea, #764ba2);">开始游戏</button>
+        </div>
+
+        <div id="gameMessage"></div>
+        <button id="restartBtn">重新开始</button>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const gameMessage = document.getElementById('gameMessage');
+        const restartBtn = document.getElementById('restartBtn');
+        const startBtn = document.getElementById('startBtn');
+        const paddleSelector = document.getElementById('paddleSelector');
+
+        // 音频上下文
+        let audioCtx = null;
+        let bgMusicNodes = [];
+        let bgMusicGain = null;
+        let isMusicPlaying = false;
+        let currentBeat = 0;
+        let lastBeatTime = 0;
+
+        // 音量设置
+        const SFX_VOLUME = 0.25; // 音效音量（较高）
+        const BG_MUSIC_VOLUME = 0.08; // 背景音乐音量（较低，不干扰音效）
+        const BPM = 128; // 节拍速度（现代电子音乐常用）
+        const BEAT_DURATION = 60 / BPM; // 每拍的时长
+
+        // 现代电子音乐和弦进行
+        const chordProgression = [
+            [261.63, 329.63, 392.00],  // Cm: C, E, G
+            [293.66, 369.99, 440.00],  // D: D, F#, A
+            [349.23, 440.00, 523.25],  // F: F, A, C
+            [392.00, 493.88, 587.33]   // G: G, B, D
+        ];
+        const bassNotes = [130.81, 146.83, 174.61, 196.00]; // 低音根音 C2, D2, F2, G2
+
+        // 初始化音频
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                bgMusicGain = audioCtx.createGain();
+                bgMusicGain.gain.value = 0;
+                bgMusicGain.connect(audioCtx.destination);
+            }
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+        }
+
+        // 启动背景音乐
+        function startBackgroundMusic() {
+            initAudio();
+            if (isMusicPlaying) return;
+            isMusicPlaying = true;
+            
+            // 渐入音乐
+            bgMusicGain.gain.linearRampToValueAtTime(BG_MUSIC_VOLUME, audioCtx.currentTime + 0.5);
+            
+            // 开始循环
+            scheduleNextBeat();
+        }
+
+        // 停止背景音乐
+        function stopBackgroundMusic() {
+            if (!isMusicPlaying) return;
+            isMusicPlaying = false;
+            
+            // 渐出音乐
+            bgMusicGain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.3);
+            
+            // 清除所有正在播放的音乐节点
+            setTimeout(() => {
+                bgMusicNodes.forEach(node => {
+                    try {
+                        node.stop();
+                    } catch (e) {}
+                });
+                bgMusicNodes = [];
+            }, 400);
+        }
+
+        // 调度下一拍
+        function scheduleNextBeat() {
+            if (!isMusicPlaying) return;
+            
+            const now = audioCtx.currentTime;
+            
+            // 计算应该在什么时间播放下一拍
+            if (lastBeatTime === 0) {
+                lastBeatTime = now;
+            } else {
+                // 确保节拍准确
+                const elapsed = now - lastBeatTime;
+                if (elapsed < BEAT_DURATION) {
+                    setTimeout(scheduleNextBeat, (BEAT_DURATION - elapsed) * 1000);
+                    return;
+                }
+                lastBeatTime = now;
+            }
+            
+            // 播放当前拍
+            playBeat(currentBeat);
+            
+            // 更新拍数
+            currentBeat = (currentBeat + 1) % 16; // 4小节循环（每小节4拍）
+            
+            // 调度下一拍
+            setTimeout(scheduleNextBeat, BEAT_DURATION * 1000);
+        }
+
+        // 播放一拍
+        function playBeat(beatNumber) {
+            if (!audioCtx || !isMusicPlaying) return;
+            
+            const bar = Math.floor(beatNumber / 4) % 4; // 0-3 (4小节循环)
+            const beatInBar = beatNumber % 4; // 0-3
+            
+            // 节拍声（Kick）
+            if (beatInBar === 0 || beatInBar === 2) {
+                playKick(beatInBar === 0);
+            }
+            
+            // Hi-hat（每半拍一个）
+            playHiHat(beatNumber % 8 === 0);
+            
+            // Snare（第2和第4拍）
+            if (beatInBar === 1 || beatInBar === 3) {
+                playSnare(beatInBar === 1);
+            }
+            
+            // Bass（每个小节的第一拍）
+            if (beatInBar === 0) {
+                playBass(bar);
+            }
+            
+            // 和弦（第一小节和第三小节）
+            if (bar === 0 || bar === 2) {
+                if (beatInBar === 0) {
+                    playChord(bar);
+                } else if (beatInBar === 2) {
+                    playChord(bar);
+                }
+            }
+            
+            // 合成器琶音（第二小节和第四小节）
+            if (bar === 1 || bar === 3) {
+                if (beatInBar === 0 || beatInBar === 1 || beatInBar === 2 || beatInBar === 3) {
+                    playArpeggio(bar, beatInBar);
+                }
+            }
+        }
+
+        // Kick 鼓
+        function playKick(heavy) {
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            
+            osc.connect(gain);
+            gain.connect(bgMusicGain);
+            
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(150, audioCtx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(40, audioCtx.currentTime + 0.15);
+            
+            const volume = heavy ? 0.4 : 0.3;
+            gain.gain.setValueAtTime(volume, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.2);
+            
+            osc.start(audioCtx.currentTime);
+            osc.stop(audioCtx.currentTime + 0.2);
+            
+            bgMusicNodes.push(osc);
+        }
+
+        // Snare 鼓
+        function playSnare(heavy) {
+            // Noise component
+            const bufferSize = audioCtx.sampleRate * 0.1;
+            const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+            const data = buffer.getChannelData(0);
+            for (let i = 0; i < bufferSize; i++) {
+                data[i] = Math.random() * 2 - 1;
+            }
+            
+            const noise = audioCtx.createBufferSource();
+            noise.buffer = buffer;
+            
+            const noiseFilter = audioCtx.createBiquadFilter();
+            noiseFilter.type = 'highpass';
+            noiseFilter.frequency.value = 800;
+            
+            const noiseGain = audioCtx.createGain();
+            const volume = heavy ? 0.2 : 0.15;
+            noiseGain.gain.setValueAtTime(volume, audioCtx.currentTime);
+            noiseGain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.1);
+            
+            noise.connect(noiseFilter);
+            noiseFilter.connect(noiseGain);
+            noiseGain.connect(bgMusicGain);
+            
+            noise.start(audioCtx.currentTime);
+            noise.stop(audioCtx.currentTime + 0.1);
+            
+            bgMusicNodes.push(noise);
+        }
+
+        // Hi-hat
+        function playHiHat(accent) {
+            const bufferSize = audioCtx.sampleRate * 0.05;
+            const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+            const data = buffer.getChannelData(0);
+            for (let i = 0; i < bufferSize; i++) {
+                data[i] = Math.random() * 2 - 1;
+            }
+            
+            const noise = audioCtx.createBufferSource();
+            noise.buffer = buffer;
+            
+            const filter = audioCtx.createBiquadFilter();
+            filter.type = 'highpass';
+            filter.frequency.value = 6000;
+            
+            const gain = audioCtx.createGain();
+            const volume = accent ? 0.08 : 0.05;
+            gain.gain.setValueAtTime(volume, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.05);
+            
+            noise.connect(filter);
+            filter.connect(gain);
+            gain.connect(bgMusicGain);
+            
+            noise.start(audioCtx.currentTime);
+            noise.stop(audioCtx.currentTime + 0.05);
+            
+            bgMusicNodes.push(noise);
+        }
+
+        // Bass
+        function playBass(bar) {
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            const filter = audioCtx.createBiquadFilter();
+            
+            osc.connect(filter);
+            filter.connect(gain);
+            gain.connect(bgMusicGain);
+            
+            osc.type = 'sawtooth';
+            const freq = bassNotes[bar];
+            osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+            osc.frequency.linearRampToValueAtTime(freq * 0.98, audioCtx.currentTime + 0.3);
+            
+            filter.type = 'lowpass';
+            filter.frequency.setValueAtTime(800, audioCtx.currentTime);
+            filter.frequency.exponentialRampToValueAtTime(300, audioCtx.currentTime + 0.3);
+            
+            gain.gain.setValueAtTime(0.25, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.4);
+            
+            osc.start(audioCtx.currentTime);
+            osc.stop(audioCtx.currentTime + 0.4);
+            
+            bgMusicNodes.push(osc);
+        }
+
+        // 和弦
+        function playChord(bar) {
+            const chord = chordProgression[bar % 4];
+            
+            chord.forEach((freq, index) => {
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                const filter = audioCtx.createBiquadFilter();
+                
+                osc.connect(filter);
+                filter.connect(gain);
+                gain.connect(bgMusicGain);
+                
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+                
+                filter.type = 'lowpass';
+                filter.frequency.setValueAtTime(2000, audioCtx.currentTime);
+                filter.frequency.exponentialRampToValueAtTime(1000, audioCtx.currentTime + 0.5);
+                
+                const volume = 0.08 - index * 0.01;
+                gain.gain.setValueAtTime(volume, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.6);
+                
+                osc.start(audioCtx.currentTime + index * 0.02);
+                osc.stop(audioCtx.currentTime + 0.6 + index * 0.02);
+                
+                bgMusicNodes.push(osc);
+            });
+        }
+
+        // 琶音
+        function playArpeggio(bar, beatInBar) {
+            const chord = chordProgression[bar % 4];
+            const noteIndex = beatInBar % chord.length;
+            const freq = chord[noteIndex] * 2; // 高八度
+            
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            
+            osc.connect(gain);
+            gain.connect(bgMusicGain);
+            
+            osc.type = 'square';
+            osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+            
+            gain.gain.setValueAtTime(0.06, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.15);
+            
+            osc.start(audioCtx.currentTime);
+            osc.stop(audioCtx.currentTime + 0.15);
+            
+            bgMusicNodes.push(osc);
+        }
+
+        // 播放击打目标音效（短促清脆）
+        function playHitSound() {
+            if (!audioCtx) return;
+            
+            const oscillator = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+            
+            oscillator.frequency.setValueAtTime(800, audioCtx.currentTime);
+            oscillator.frequency.exponentialRampToValueAtTime(1200, audioCtx.currentTime + 0.1);
+            
+            gainNode.gain.setValueAtTime(SFX_VOLUME, audioCtx.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.15);
+            
+            oscillator.start(audioCtx.currentTime);
+            oscillator.stop(audioCtx.currentTime + 0.15);
+        }
+
+        // 播放挡板碰撞音效（弹性回弹）
+        function playPaddleSound() {
+            if (!audioCtx) return;
+            
+            const oscillator = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+            
+            oscillator.type = 'sine';
+            oscillator.frequency.setValueAtTime(400, audioCtx.currentTime);
+            oscillator.frequency.exponentialRampToValueAtTime(600, audioCtx.currentTime + 0.1);
+            
+            gainNode.gain.setValueAtTime(SFX_VOLUME * 0.8, audioCtx.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.2);
+            
+            oscillator.start(audioCtx.currentTime);
+            oscillator.stop(audioCtx.currentTime + 0.2);
+        }
+
+        // 播放墙壁碰撞音效（清脆）
+        function playWallSound() {
+            if (!audioCtx) return;
+            
+            const oscillator = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+            
+            oscillator.type = 'triangle';
+            oscillator.frequency.setValueAtTime(600, audioCtx.currentTime);
+            
+            gainNode.gain.setValueAtTime(SFX_VOLUME * 0.6, audioCtx.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
+            
+            oscillator.start(audioCtx.currentTime);
+            oscillator.stop(audioCtx.currentTime + 0.1);
+        }
+
+        // 播放爆炸音效（震撼）
+        function playExplosionSound() {
+            if (!audioCtx) return;
+
+            // 创建多层噪声
+            const bufferSize = audioCtx.sampleRate * 0.5;
+            const buffer1 = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+            const buffer2 = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+            const data1 = buffer1.getChannelData(0);
+            const data2 = buffer2.getChannelData(0);
+
+            for (let i = 0; i < bufferSize; i++) {
+                data1[i] = (Math.random() * 2 - 1) * Math.exp(-i / (bufferSize * 0.08));
+                data2[i] = (Math.random() * 2 - 1) * Math.exp(-i / (bufferSize * 0.12));
+            }
+
+            // 第一层：低频轰鸣
+            const noiseSource1 = audioCtx.createBufferSource();
+            noiseSource1.buffer = buffer1;
+
+            const filter1 = audioCtx.createBiquadFilter();
+            filter1.type = 'lowpass';
+            filter1.frequency.setValueAtTime(800, audioCtx.currentTime);
+            filter1.frequency.exponentialRampToValueAtTime(80, audioCtx.currentTime + 0.5);
+
+            const gain1 = audioCtx.createGain();
+            gain1.gain.setValueAtTime(SFX_VOLUME * 2.0, audioCtx.currentTime);
+            gain1.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.5);
+
+            noiseSource1.connect(filter1);
+            filter1.connect(gain1);
+            gain1.connect(audioCtx.destination);
+
+            // 第二层：中频炸裂
+            const noiseSource2 = audioCtx.createBufferSource();
+            noiseSource2.buffer = buffer2;
+
+            const filter2 = audioCtx.createBiquadFilter();
+            filter2.type = 'bandpass';
+            filter2.frequency.setValueAtTime(1500, audioCtx.currentTime);
+            filter2.frequency.exponentialRampToValueAtTime(200, audioCtx.currentTime + 0.3);
+            filter2.Q.value = 5;
+
+            const gain2 = audioCtx.createGain();
+            gain2.gain.setValueAtTime(SFX_VOLUME * 1.5, audioCtx.currentTime);
+            gain2.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+
+            noiseSource2.connect(filter2);
+            filter2.connect(gain2);
+            gain2.connect(audioCtx.destination);
+
+            // 第三层：冲击波低频
+            const impactOsc = audioCtx.createOscillator();
+            const impactGain = audioCtx.createGain();
+            impactOsc.connect(impactGain);
+            impactGain.connect(audioCtx.destination);
+
+            impactOsc.type = 'sine';
+            impactOsc.frequency.setValueAtTime(60, audioCtx.currentTime);
+            impactOsc.frequency.exponentialRampToValueAtTime(25, audioCtx.currentTime + 0.4);
+
+            impactGain.gain.setValueAtTime(SFX_VOLUME * 1.8, audioCtx.currentTime);
+            impactGain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.4);
+
+            impactOsc.start(audioCtx.currentTime);
+            impactOsc.stop(audioCtx.currentTime + 0.4);
+
+            noiseSource1.start(audioCtx.currentTime);
+            noiseSource2.start(audioCtx.currentTime);
+        }
+
+        // 播放炸弹音效（炸裂）
+        function playBombSound() {
+            if (!audioCtx) return;
+
+            // 第一层：低频冲击波
+            const impactOsc = audioCtx.createOscillator();
+            const impactGain = audioCtx.createGain();
+            impactOsc.connect(impactGain);
+            impactGain.connect(audioCtx.destination);
+
+            impactOsc.type = 'sawtooth';
+            impactOsc.frequency.setValueAtTime(100, audioCtx.currentTime);
+            impactOsc.frequency.exponentialRampToValueAtTime(30, audioCtx.currentTime + 0.5);
+
+            impactGain.gain.setValueAtTime(SFX_VOLUME * 1.8, audioCtx.currentTime);
+            impactGain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.5);
+
+            impactOsc.start(audioCtx.currentTime);
+            impactOsc.stop(audioCtx.currentTime + 0.5);
+
+            // 第二层：中频炸裂声
+            const crackOsc = audioCtx.createOscillator();
+            const crackGain = audioCtx.createGain();
+            crackOsc.connect(crackGain);
+            crackGain.connect(audioCtx.destination);
+
+            crackOsc.type = 'square';
+            crackOsc.frequency.setValueAtTime(200, audioCtx.currentTime);
+            crackOsc.frequency.exponentialRampToValueAtTime(60, audioCtx.currentTime + 0.3);
+
+            crackGain.gain.setValueAtTime(SFX_VOLUME * 1.2, audioCtx.currentTime);
+            crackGain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+
+            crackOsc.start(audioCtx.currentTime);
+            crackOsc.stop(audioCtx.currentTime + 0.3);
+
+            // 第三层：高频尖锐声
+            const sharpOsc = audioCtx.createOscillator();
+            const sharpGain = audioCtx.createGain();
+            sharpOsc.connect(sharpGain);
+            sharpGain.connect(audioCtx.destination);
+
+            sharpOsc.type = 'triangle';
+            sharpOsc.frequency.setValueAtTime(800, audioCtx.currentTime);
+            sharpOsc.frequency.exponentialRampToValueAtTime(150, audioCtx.currentTime + 0.2);
+
+            sharpGain.gain.setValueAtTime(SFX_VOLUME * 0.8, audioCtx.currentTime);
+            sharpGain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.2);
+
+            sharpOsc.start(audioCtx.currentTime);
+            sharpOsc.stop(audioCtx.currentTime + 0.2);
+        }
+
+        // 播放挡板缩小音效（下降）
+        function playShrinkSound() {
+            if (!audioCtx) return;
+            
+            const oscillator = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+            
+            oscillator.type = 'sine';
+            oscillator.frequency.setValueAtTime(500, audioCtx.currentTime);
+            oscillator.frequency.exponentialRampToValueAtTime(200, audioCtx.currentTime + 0.3);
+            
+            gainNode.gain.setValueAtTime(SFX_VOLUME, audioCtx.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+            
+            oscillator.start(audioCtx.currentTime);
+            oscillator.stop(audioCtx.currentTime + 0.3);
+        }
+
+        // 播放挡板增长音效（上升）
+        function playGrowSound() {
+            if (!audioCtx) return;
+            
+            const oscillator = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+            
+            oscillator.type = 'sine';
+            oscillator.frequency.setValueAtTime(300, audioCtx.currentTime);
+            oscillator.frequency.exponentialRampToValueAtTime(600, audioCtx.currentTime + 0.2);
+            
+            gainNode.gain.setValueAtTime(SFX_VOLUME * 0.8, audioCtx.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.2);
+            
+            oscillator.start(audioCtx.currentTime);
+            oscillator.stop(audioCtx.currentTime + 0.2);
+        }
+
+        // 播放导弹下落呼啸声
+        function playMissileFallSound() {
+            if (!audioCtx) return;
+
+            // 第一层：啸叫声音（高频）
+            const whooshOsc = audioCtx.createOscillator();
+            const whooshGain = audioCtx.createGain();
+            whooshOsc.connect(whooshGain);
+            whooshGain.connect(audioCtx.destination);
+
+            whooshOsc.type = 'sawtooth';
+            whooshOsc.frequency.setValueAtTime(800, audioCtx.currentTime);
+            whooshOsc.frequency.exponentialRampToValueAtTime(200, audioCtx.currentTime + 0.8);
+
+            whooshGain.gain.setValueAtTime(SFX_VOLUME * 2.5, audioCtx.currentTime);
+            whooshGain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.8);
+
+            whooshOsc.start(audioCtx.currentTime);
+            whooshOsc.stop(audioCtx.currentTime + 0.8);
+
+            // 第二层：风声噪声
+            const bufferSize = audioCtx.sampleRate * 0.6;
+            const noiseBuffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+            const noiseData = noiseBuffer.getChannelData(0);
+
+            for (let i = 0; i < bufferSize; i++) {
+                noiseData[i] = (Math.random() * 2 - 1) * Math.exp(-i / (bufferSize * 0.15));
+            }
+
+            const noiseSource = audioCtx.createBufferSource();
+            noiseSource.buffer = noiseBuffer;
+
+            const noiseFilter = audioCtx.createBiquadFilter();
+            noiseFilter.type = 'bandpass';
+            noiseFilter.frequency.setValueAtTime(1000, audioCtx.currentTime);
+            noiseFilter.frequency.exponentialRampToValueAtTime(400, audioCtx.currentTime + 0.6);
+            noiseFilter.Q.value = 3;
+
+            const noiseGain = audioCtx.createGain();
+            noiseGain.gain.setValueAtTime(SFX_VOLUME * 1.8, audioCtx.currentTime);
+            noiseGain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.6);
+
+            noiseSource.connect(noiseFilter);
+            noiseFilter.connect(noiseGain);
+            noiseGain.connect(audioCtx.destination);
+
+            noiseSource.start(audioCtx.currentTime);
+        }
+
+        // 播放小白球生成音效（魔法）
+        function playSpawnBallSound() {
+            if (!audioCtx) return;
+            
+            // 创建两个振荡器产生和弦效果
+            const frequencies = [523, 659, 784]; // C E G
+            
+            frequencies.forEach((freq, index) => {
+                const oscillator = audioCtx.createOscillator();
+                const gainNode = audioCtx.createGain();
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(audioCtx.destination);
+                
+                oscillator.type = 'sine';
+                oscillator.frequency.setValueAtTime(freq, audioCtx.currentTime);
+                
+                const delay = index * 0.05;
+                gainNode.gain.setValueAtTime(0, audioCtx.currentTime + delay);
+                gainNode.gain.linearRampToValueAtTime(SFX_VOLUME * 0.6, audioCtx.currentTime + delay + 0.05);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + delay + 0.4);
+                
+                oscillator.start(audioCtx.currentTime + delay);
+                oscillator.stop(audioCtx.currentTime + delay + 0.4);
+            });
+        }
+
+        // 播放失败音效（悲伤）
+        function playLoseSound() {
+            if (!audioCtx) return;
+            
+            const oscillator = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+            
+            oscillator.type = 'sine';
+            oscillator.frequency.setValueAtTime(400, audioCtx.currentTime);
+            oscillator.frequency.exponentialRampToValueAtTime(100, audioCtx.currentTime + 0.8);
+            
+            gainNode.gain.setValueAtTime(SFX_VOLUME, audioCtx.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.8);
+            
+            oscillator.start(audioCtx.currentTime);
+            oscillator.stop(audioCtx.currentTime + 0.8);
+        }
+
+        // 播放胜利音效（庆祝）
+        function playWinSound() {
+            if (!audioCtx) return;
+            
+            const melody = [
+                { freq: 523, time: 0 },   // C
+                { freq: 659, time: 0.1 }, // E
+                { freq: 784, time: 0.2 }, // G
+                { freq: 1047, time: 0.3 }, // C5
+                { freq: 784, time: 0.4 }, // G
+                { freq: 1047, time: 0.5 }, // C5
+                { freq: 1319, time: 0.6 }  // E5
+            ];
+            
+            melody.forEach(note => {
+                const oscillator = audioCtx.createOscillator();
+                const gainNode = audioCtx.createGain();
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(audioCtx.destination);
+                
+                oscillator.type = 'sine';
+                oscillator.frequency.setValueAtTime(note.freq, audioCtx.currentTime + note.time);
+                
+                gainNode.gain.setValueAtTime(0, audioCtx.currentTime + note.time);
+                gainNode.gain.linearRampToValueAtTime(SFX_VOLUME, audioCtx.currentTime + note.time + 0.02);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + note.time + 0.3);
+                
+                oscillator.start(audioCtx.currentTime + note.time);
+                oscillator.stop(audioCtx.currentTime + note.time + 0.3);
+            });
+        }
+
+        // 播放开始音效（期待）
+        function playStartSound() {
+            if (!audioCtx) return;
+            
+            const oscillator = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+            
+            oscillator.type = 'sine';
+            oscillator.frequency.setValueAtTime(440, audioCtx.currentTime);
+            oscillator.frequency.exponentialRampToValueAtTime(880, audioCtx.currentTime + 0.2);
+            
+            gainNode.gain.setValueAtTime(0, audioCtx.currentTime);
+            gainNode.gain.linearRampToValueAtTime(SFX_VOLUME * 0.8, audioCtx.currentTime + 0.05);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+            
+            oscillator.start(audioCtx.currentTime);
+            oscillator.stop(audioCtx.currentTime + 0.3);
+        }
+
+        // 游戏常量
+        const BALL_RADIUS = 10;
+        const PADDLE_HEIGHT = 15;
+        const PADDLE_WIDTH = 240;
+        const RED_BALL_RADIUS = 20;
+        const GRAVITY = 0.15;
+        const BOUNCE_POWER = -12;
+
+        // 游戏状态
+        let gameState = 'selector'; // selector, waiting, playing, gameover, success
+        let whiteBall = null;
+        let paddle = null;
+        let paddleStyle = 'neon';
+        let redBalls = [];
+        let leftPressed = false;
+        let rightPressed = false;
+        let weather = 'none';
+        let weatherParticles = [];
+        let bombs = [];
+        let bombSpawnTimer = 0;
+            let totalRedBalls = 48;
+            let initialPaddleWidth = 240;
+        let explosions = [];
+        let smallBalls = [];
+        let ballsSpawned = [];
+        let currentTheme = 'emoji';
+        let drones = []; // 无人机
+        let bullets = []; // 子弹
+        let droneSpawnTimer = 0; // 无人机生成计时器
+
+        // 主题定义
+        const themes = {
+            emoji: ['😀', '😎', '🎮', '🎯', '🎲', '🎪', '🎭', '🎨', '🎬', '🎧', '🎤', '🎸'],
+            fruit: ['🍎', '🍊', '🍋', '🍇', '🍓', '🍑', '🍒', '🥝', '🍍', '🥭', '🍌', '🍐'],
+            veggie: ['🥕', '🥦', '🍆', '🥑', '🌶️', '🥒', '🥬', '🌽', '🥔', '🍠', '🧄', '🧅'],
+            animal: ['🐱', '🐶', '🐰', '🐻', '🦊', '🐼', '🦁', '🐯', '🦄', '🐨', '🐵', '🦊'],
+            labubu: ['👹', '👺', '🤡', '🎃', '👻', '💀', '🤖', '👾', '🎭', '🃏', '🎪', '🎨'],
+            goose: ['🦢', '🦆', '🦅', '🦉', '🦚', '🦜', '🦩', '🐦', '🐔', '🦃', '🦈', '🐊']
+        };
+
+        // 挡板样式定义
+        const paddleStyles = {
+            neon: {
+                color1: '#00f260',
+                color2: '#0575e6',
+                glow: '#00f260',
+                pattern: 'neon'
+            },
+            cyber: {
+                color1: '#f857a6',
+                color2: '#ff5858',
+                glow: '#f857a6',
+                pattern: 'cyber'
+            },
+            cosmic: {
+                color1: '#667eea',
+                color2: '#764ba2',
+                glow: '#667eea',
+                pattern: 'cosmic'
+            },
+            pastel: {
+                color1: '#a8e063',
+                color2: '#56ab2f',
+                glow: '#a8e063',
+                pattern: 'pastel'
+            }
+        };
+
+        // 挡板选择
+        document.querySelectorAll('#paddleOptions .paddleOption').forEach(option => {
+            option.addEventListener('click', () => {
+                paddleStyle = option.dataset.style;
+                // 高亮选中的挡板
+                document.querySelectorAll('#paddleOptions .paddleOption').forEach(opt => {
+                    opt.style.borderColor = 'transparent';
+                });
+                option.style.borderColor = '#fff';
+                // 初始化游戏但不隐藏选择界面
+                initGame();
+            });
+        });
+
+        // 主题选择（在挡板选择界面）
+        document.querySelectorAll('#themeOptions .paddleOption').forEach(option => {
+            option.addEventListener('click', () => {
+                currentTheme = option.dataset.theme;
+                document.querySelectorAll('#themeOptions .paddleOption').forEach(opt => {
+                    opt.style.borderColor = 'transparent';
+                });
+                option.style.borderColor = '#fff';
+                initGame();
+            });
+        });
+
+        // 开始游戏按钮（当用户准备好后点击）
+        startBtn.addEventListener('click', () => {
+            if (gameState === 'waiting') {
+                paddleSelector.classList.add('hidden');
+                startBtn.style.display = 'none';
+                launchBall();
+            }
+        });
+
+        // 初始化游戏
+        function initGame() {
+            // 随机选择天气
+            const weatherTypes = ['none', 'rain', 'snow'];
+            weather = weatherTypes[Math.floor(Math.random() * weatherTypes.length)];
+            
+            // 初始化天气粒子
+            weatherParticles = [];
+            if (weather === 'rain') {
+                for (let i = 0; i < 100; i++) {
+                    weatherParticles.push({
+                        x: Math.random() * canvas.width,
+                        y: Math.random() * canvas.height,
+                        speed: 5 + Math.random() * 5,
+                        length: 10 + Math.random() * 20
+                    });
+                }
+            } else if (weather === 'snow') {
+                for (let i = 0; i < 80; i++) {
+                    weatherParticles.push({
+                        x: Math.random() * canvas.width,
+                        y: Math.random() * canvas.height,
+                        speed: 1 + Math.random() * 2,
+                        radius: 2 + Math.random() * 3,
+                        drift: Math.random() * 2 - 1
+                    });
+                }
+            }
+            
+            // 初始化炸弹
+            bombs = [];
+            bombSpawnTimer = 0;
+            bombSparkles = [];
+            
+            // 初始化爆炸效果和小白球
+            explosions = [];
+            smallBalls = [];
+            ballsSpawned = [false, false, false];
+            
+            // 初始化无人机和子弹
+            drones = [];
+            bullets = [];
+            droneSpawnTimer = 0;
+            
+            // 初始化挡板
+            paddle = {
+                x: canvas.width / 2 - PADDLE_WIDTH / 2,
+                y: canvas.height * 3 / 4 - PADDLE_HEIGHT / 2,
+                width: PADDLE_WIDTH,
+                height: PADDLE_HEIGHT,
+                speed: 8,
+                style: paddleStyles[paddleStyle],
+                time: 0
+            };
+
+            // 初始化目标物品（根据主题）
+            redBalls = [];
+            const rows = 4;
+            const numBallsPerRow = 12;
+            const startRedBallY = 80;
+            const rowSpacing = 50;
+            const themeItems = themes[currentTheme];
+            
+            for (let row = 0; row < rows; row++) {
+                const redBallY = startRedBallY + row * rowSpacing;
+                const spacing = (canvas.width - 60) / (numBallsPerRow - 1);
+                
+                for (let i = 0; i < numBallsPerRow; i++) {
+                    const itemIndex = (row * numBallsPerRow + i) % themeItems.length;
+                    redBalls.push({
+                        x: 30 + i * spacing,
+                        y: redBallY,
+                        radius: RED_BALL_RADIUS,
+                        visible: true,
+                        emoji: themeItems[itemIndex]
+                    });
+                }
+            }
+
+            // 白色球在左侧小孔处
+            whiteBall = {
+                x: 20,
+                y: canvas.height / 2,
+                radius: BALL_RADIUS,
+                vx: 4,
+                vy: -3,
+                active: false
+            };
+
+            gameState = 'waiting';
+            gameMessage.style.display = 'none';
+            restartBtn.style.display = 'none';
+            startBtn.style.display = 'block';
+            startBtn.textContent = '开始游戏';
+        }
+
+        // 发射白球
+        function launchBall() {
+            if (gameState === 'waiting') {
+                initAudio();
+                playStartSound();
+                startBackgroundMusic();
+                whiteBall.active = true;
+                gameState = 'playing';
+                startBtn.style.display = 'none';
+            }
+        }
+
+        // 绘制背景
+        function drawBackground() {
+            // 根据天气调整背景色
+            let bgColor;
+            if (weather === 'rain') {
+                bgColor = '#16213e';
+            } else if (weather === 'snow') {
+                bgColor = '#2c3e50';
+            } else {
+                bgColor = '#0d0d1a';
+            }
+            
+            // 创建渐变背景
+            const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+            gradient.addColorStop(0, bgColor);
+            gradient.addColorStop(1, '#1a1a2e');
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // 绘制网格背景效果
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.03)';
+            ctx.lineWidth = 1;
+            for (let i = 0; i < canvas.width; i += 50) {
+                ctx.beginPath();
+                ctx.moveTo(i, 0);
+                ctx.lineTo(i, canvas.height);
+                ctx.stroke();
+            }
+            for (let i = 0; i < canvas.height; i += 50) {
+                ctx.beginPath();
+                ctx.moveTo(0, i);
+                ctx.lineTo(canvas.width, i);
+                ctx.stroke();
+            }
+            
+            // 绘制左侧小孔
+            ctx.beginPath();
+            ctx.arc(20, canvas.height / 2, 15, 0, Math.PI * 2);
+            const holeGradient = ctx.createRadialGradient(20, canvas.height / 2, 0, 20, canvas.height / 2, 15);
+            holeGradient.addColorStop(0, '#0f0f1a');
+            holeGradient.addColorStop(1, '#1a1a2e');
+            ctx.fillStyle = holeGradient;
+            ctx.fill();
+            ctx.strokeStyle = '#333';
+            ctx.lineWidth = 3;
+            ctx.stroke();
+            
+            // 绘制天气效果
+            drawWeather();
+        }
+
+        // 绘制天气效果
+        function drawWeather() {
+            if (weather === 'rain') {
+                ctx.strokeStyle = 'rgba(174, 194, 224, 0.6)';
+                ctx.lineWidth = 2;
+                weatherParticles.forEach(particle => {
+                    ctx.beginPath();
+                    ctx.moveTo(particle.x, particle.y);
+                    ctx.lineTo(particle.x, particle.y + particle.length);
+                    ctx.stroke();
+                });
+            } else if (weather === 'snow') {
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+                weatherParticles.forEach(particle => {
+                    ctx.beginPath();
+                    ctx.arc(particle.x, particle.y, particle.radius, 0, Math.PI * 2);
+                    ctx.fill();
+                });
+            }
+        }
+
+        // 绘制目标物品
+        function drawRedBalls() {
+            redBalls.forEach(ball => {
+                if (ball.visible) {
+                    // 绘制发光效果
+                    const glowGradient = ctx.createRadialGradient(
+                        ball.x, ball.y, 0,
+                        ball.x, ball.y, ball.radius * 1.5
+                    );
+                    glowGradient.addColorStop(0, 'rgba(255, 255, 255, 0.3)');
+                    glowGradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
+                    ctx.beginPath();
+                    ctx.arc(ball.x, ball.y, ball.radius * 1.5, 0, Math.PI * 2);
+                    ctx.fillStyle = glowGradient;
+                    ctx.fill();
+
+                    // 其他主题使用emoji绘制
+                        // 普通emoji绘制
+                        ctx.font = `${RED_BALL_RADIUS * 2}px Arial`;
+                        ctx.textAlign = 'center';
+                        ctx.textBaseline = 'middle';
+                        ctx.fillText(ball.emoji, ball.x, ball.y);
+                    }
+                }
+            });
+        }
+
+        // 绘制白色球
+        function drawWhiteBall() {
+            if (!whiteBall.active && gameState === 'waiting') {
+                // 在小孔中显示
+                ctx.beginPath();
+                ctx.arc(20, canvas.height / 2, whiteBall.radius, 0, Math.PI * 2);
+                ctx.fillStyle = '#fff';
+                ctx.fill();
+            } else if (whiteBall.active) {
+                // 发光效果
+                const glowGradient = ctx.createRadialGradient(
+                    whiteBall.x, whiteBall.y, 0,
+                    whiteBall.x, whiteBall.y, whiteBall.radius * 2
+                );
+                glowGradient.addColorStop(0, 'rgba(255, 255, 255, 0.8)');
+                glowGradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
+                ctx.beginPath();
+                ctx.arc(whiteBall.x, whiteBall.y, whiteBall.radius * 2, 0, Math.PI * 2);
+                ctx.fillStyle = glowGradient;
+                ctx.fill();
+                
+                // 球体
+                const gradient = ctx.createRadialGradient(
+                    whiteBall.x - whiteBall.radius / 3,
+                    whiteBall.y - whiteBall.radius / 3,
+                    0,
+                    whiteBall.x,
+                    whiteBall.y,
+                    whiteBall.radius
+                );
+                gradient.addColorStop(0, '#ffffff');
+                gradient.addColorStop(1, '#b0b0b0');
+                
+                ctx.beginPath();
+                ctx.arc(whiteBall.x, whiteBall.y, whiteBall.radius, 0, Math.PI * 2);
+                ctx.fillStyle = gradient;
+                ctx.fill();
+                
+                // 高光
+                ctx.beginPath();
+                ctx.arc(whiteBall.x - whiteBall.radius / 3, whiteBall.y - whiteBall.radius / 3, whiteBall.radius / 4, 0, Math.PI * 2);
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+                ctx.fill();
+            }
+        }
+
+        // 绘制无人机（军用四旋翼侦察无人机）
+        function drawDrones() {
+            drones.forEach(drone => {
+                const scale = drone.scale || 1;
+
+                // 应用缩放
+                ctx.save();
+                ctx.translate(drone.x, drone.y);
+                ctx.scale(scale, scale);
+                ctx.translate(-drone.x, -drone.y);
+
+                // 四个旋翼臂（X型布局）
+                const armAngles = [Math.PI / 4, 3 * Math.PI / 4, 5 * Math.PI / 4, 7 * Math.PI / 4];
+                
+                armAngles.forEach((armAngle, index) => {
+                    const armStartX = drone.x + Math.cos(armAngle) * 15;
+                    const armStartY = drone.y + Math.sin(armAngle) * 15;
+                    const armEndX = drone.x + Math.cos(armAngle) * 50;
+                    const armEndY = drone.y + Math.sin(armAngle) * 50;
+
+                    // 碳纤维旋翼臂
+                    ctx.beginPath();
+                    ctx.moveTo(armStartX, armStartY);
+                    ctx.lineTo(armEndX, armEndY);
+                    const armGradient = ctx.createLinearGradient(armStartX, armStartY, armEndX, armEndY);
+                    armGradient.addColorStop(0, '#2d2d2d');
+                    armGradient.addColorStop(0.5, '#1a1a1a');
+                    armGradient.addColorStop(1, '#0d0d0d');
+                    ctx.strokeStyle = armGradient;
+                    ctx.lineWidth = 8;
+                    ctx.lineCap = 'round';
+                    ctx.stroke();
+
+                    // 旋翼臂高光
+                    ctx.beginPath();
+                    ctx.moveTo(armStartX, armStartY - 2);
+                    ctx.lineTo(armEndX, armEndY - 2);
+                    ctx.strokeStyle = 'rgba(255, 255, 255, 0.15)';
+                    ctx.lineWidth = 2;
+                    ctx.stroke();
+
+                    // 电机外壳
+                    ctx.beginPath();
+                    ctx.arc(armEndX, armEndY, 10, 0, Math.PI * 2);
+                    const motorGradient = ctx.createRadialGradient(armEndX - 3, armEndY - 3, 0, armEndX, armEndY, 10);
+                    motorGradient.addColorStop(0, '#3d3d3d');
+                    motorGradient.addColorStop(0.7, '#1a1a1a');
+                    motorGradient.addColorStop(1, '#0a0a0a');
+                    ctx.fillStyle = motorGradient;
+                    ctx.fill();
+                    ctx.strokeStyle = '#4a4a4a';
+                    ctx.lineWidth = 1;
+                    ctx.stroke();
+
+                    // 旋翼叶片（快速旋转效果）
+                    const rotorOffset = Date.now() * 0.05 * (index % 2 === 0 ? 1 : -1);
+                    ctx.save();
+                    ctx.translate(armEndX, armEndY);
+                    ctx.rotate(rotorOffset);
+                    
+                    // 旋翼1
+                    ctx.beginPath();
+                    ctx.ellipse(0, -15, 4, 18, 0, 0, Math.PI * 2);
+                    ctx.fillStyle = 'rgba(100, 100, 100, 0.9)';
+                    ctx.fill();
+                    
+                    // 旋翼2（垂直）
+                    ctx.beginPath();
+                    ctx.ellipse(15, 0, 18, 4, 0, 0, Math.PI * 2);
+                    ctx.fill();
+                    
+                    // 旋翼模糊圆环
+                    ctx.beginPath();
+                    ctx.arc(0, 0, 16, 0, Math.PI * 2);
+                    const blurGradient = ctx.createRadialGradient(0, 0, 8, 0, 0, 16);
+                    blurGradient.addColorStop(0, 'rgba(200, 200, 200, 0.3)');
+                    blurGradient.addColorStop(0.7, 'rgba(150, 150, 150, 0.15)');
+                    blurGradient.addColorStop(1, 'rgba(100, 100, 100, 0)');
+                    ctx.fillStyle = blurGradient;
+                    ctx.fill();
+                    
+                    ctx.restore();
+
+                    // 旋翼发光点（夜间模式）
+                    const ledIntensity = 0.5 + Math.sin(Date.now() * 0.01 + index) * 0.5;
+                    ctx.beginPath();
+                    ctx.arc(armEndX + Math.cos(armAngle) * 12, armEndY + Math.sin(armAngle) * 12, 3, 0, Math.PI * 2);
+                    ctx.fillStyle = `rgba(0, 255, 0, ${ledIntensity})`;
+                    ctx.fill();
+                    ctx.shadowColor = '#00ff00';
+                    ctx.shadowBlur = 8;
+                    ctx.fill();
+                    ctx.shadowBlur = 0;
+                });
+
+                // 中央机身主体（六边形）
+                ctx.beginPath();
+                for (let i = 0; i < 6; i++) {
+                    const angle = (Math.PI * 2 / 6) * i + Math.PI / 6;
+                    const x = drone.x + Math.cos(angle) * 20;
+                    const y = drone.y + Math.sin(angle) * 20;
+                    if (i === 0) {
+                        ctx.moveTo(x, y);
+                    } else {
+                        ctx.lineTo(x, y);
+                    }
+                }
+                ctx.closePath();
+
+                // 机身主体渐变（军用迷彩灰）
+                const bodyGradient = ctx.createLinearGradient(drone.x - 20, drone.y - 20, drone.x + 20, drone.y + 20);
+                bodyGradient.addColorStop(0, '#4a4a4a');
+                bodyGradient.addColorStop(0.3, '#2d2d2d');
+                bodyGradient.addColorStop(0.7, '#1a1a1a');
+                bodyGradient.addColorStop(1, '#0d0d0d');
+                ctx.fillStyle = bodyGradient;
+                ctx.fill();
+
+                // 机身边框
+                ctx.strokeStyle = '#5a5a5a';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+
+                // 机身纹理（防滑表面）
+                ctx.strokeStyle = 'rgba(0, 0, 0, 0.3)';
+                ctx.lineWidth = 1;
+                for (let i = 0; i < 4; i++) {
+                    const angle = (Math.PI * 2 / 4) * i + Math.PI / 8;
+                    ctx.beginPath();
+                    ctx.moveTo(
+                        drone.x + Math.cos(angle) * 8,
+                        drone.y + Math.sin(angle) * 8
+                    );
+                    ctx.lineTo(
+                        drone.x + Math.cos(angle) * 18,
+                        drone.y + Math.sin(angle) * 18
+                    );
+                    ctx.stroke();
+                }
+
+                // 底部摄像头球体
+                ctx.beginPath();
+                ctx.arc(drone.x, drone.y + 5, 8, 0, Math.PI * 2);
+                const cameraGradient = ctx.createRadialGradient(drone.x - 2, drone.y + 3, 0, drone.x, drone.y + 5, 8);
+                cameraGradient.addColorStop(0, '#2a2a2a');
+                cameraGradient.addColorStop(0.6, '#1a1a1a');
+                cameraGradient.addColorStop(1, '#0a0a0a');
+                ctx.fillStyle = cameraGradient;
+                ctx.fill();
+                ctx.strokeStyle = '#3a3a3a';
+                ctx.lineWidth = 1;
+                ctx.stroke();
+
+                // 摄像头镜头
+                ctx.beginPath();
+                ctx.arc(drone.x, drone.y + 5, 5, 0, Math.PI * 2);
+                const lensGradient = ctx.createRadialGradient(drone.x - 1, drone.y + 4, 0, drone.x, drone.y + 5, 5);
+                lensGradient.addColorStop(0, '#1e3a5f');
+                lensGradient.addColorStop(0.7, '#0f1f3a');
+                lensGradient.addColorStop(1, '#050f1a');
+                ctx.fillStyle = lensGradient;
+                ctx.fill();
+
+                // 镜头反光
+                ctx.beginPath();
+                ctx.arc(drone.x - 2, drone.y + 3, 2, 0, Math.PI * 2);
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.4)';
+                ctx.fill();
+
+                // 顶部GPS天线
+                ctx.beginPath();
+                ctx.arc(drone.x, drone.y - 12, 4, 0, Math.PI * 2);
+                const antennaGradient = ctx.createRadialGradient(drone.x - 1, drone.y - 13, 0, drone.x, drone.y - 12, 4);
+                antennaGradient.addColorStop(0, '#3d3d3d');
+                antennaGradient.addColorStop(1, '#1d1d1d');
+                ctx.fillStyle = antennaGradient;
+                ctx.fill();
+                ctx.strokeStyle = '#4d4d4d';
+                ctx.lineWidth = 1;
+                ctx.stroke();
+
+                // LED状态灯（红色闪烁）
+                const blink = Math.sin(Date.now() * 0.01) > 0;
+                ctx.beginPath();
+                ctx.arc(drone.x - 12, drone.y - 8, 3, 0, Math.PI * 2);
+                ctx.fillStyle = blink ? '#ff0000' : '#330000';
+                ctx.fill();
+                if (blink) {
+                    ctx.shadowColor = '#ff0000';
+                    ctx.shadowBlur = 10;
+                    ctx.fill();
+                    ctx.shadowBlur = 0;
+                }
+
+                // 绿色LED（右侧）
+                ctx.beginPath();
+                ctx.arc(drone.x + 12, drone.y - 8, 3, 0, Math.PI * 2);
+                ctx.fillStyle = '#00ff00';
+                ctx.fill();
+                ctx.shadowColor = '#00ff00';
+                ctx.shadowBlur = 6;
+                ctx.fill();
+                ctx.shadowBlur = 0;
+
+                // 激光瞄准线（侦察模式）
+                if (blink) {
+                    ctx.strokeStyle = 'rgba(255, 0, 0, 0.3)';
+                    ctx.lineWidth = 1;
+                    ctx.setLineDash([3, 3]);
+                    ctx.beginPath();
+                    ctx.moveTo(drone.x, drone.y + 13);
+                    ctx.lineTo(drone.x, drone.y + 60);
+                    ctx.stroke();
+                    ctx.setLineDash([]);
+
+                    // 激光点
+                    ctx.beginPath();
+                    ctx.arc(drone.x, drone.y + 60, 4, 0, Math.PI * 2);
+                    ctx.fillStyle = 'rgba(255, 0, 0, 0.4)';
+                    ctx.fill();
+                }
+
+                // 恢复缩放
+                ctx.restore();
+            });
+        }
+
+        // 绘制子弹
+        function drawBullets() {
+            bullets.forEach(bullet => {
+                ctx.shadowColor = '#ffff00';
+                ctx.shadowBlur = 10;
+                
+                ctx.beginPath();
+                ctx.arc(bullet.x, bullet.y, 4, 0, Math.PI * 2);
+                const bulletGradient = ctx.createRadialGradient(
+                    bullet.x, bullet.y, 0,
+                    bullet.x, bullet.y, 4
+                );
+                bulletGradient.addColorStop(0, '#ffffff');
+                bulletGradient.addColorStop(1, '#ffff00');
+                ctx.fillStyle = bulletGradient;
+                ctx.fill();
+                
+                ctx.shadowBlur = 0;
+            });
+        }
+
+        // 绘制挡板
+        function drawPaddle() {
+            paddle.time += 0.05;
+            const style = paddle.style;
+            
+            // 外发光
+            ctx.shadowColor = style.glow;
+            ctx.shadowBlur = 20;
+            
+            // 挡板渐变
+            const gradient = ctx.createLinearGradient(paddle.x, paddle.y, paddle.x, paddle.y + paddle.height);
+            gradient.addColorStop(0, style.color1);
+            gradient.addColorStop(1, style.color2);
+            
+            ctx.beginPath();
+            ctx.roundRect(paddle.x, paddle.y, paddle.width, paddle.height, 8);
+            ctx.fillStyle = gradient;
+            ctx.fill();
+            
+            // 根据风格绘制图案
+            if (style.pattern === 'neon') {
+                ctx.strokeStyle = 'rgba(255, 255, 255, 0.8)';
+                ctx.lineWidth = 2;
+                for (let i = 0; i < paddle.width - 20; i += 15) {
+                    const x = paddle.x + 10 + i;
+                    ctx.beginPath();
+                    ctx.moveTo(x, paddle.y + paddle.height / 2);
+                    ctx.lineTo(x + 5, paddle.y + paddle.height / 2);
+                    ctx.stroke();
+                }
+            } else if (style.pattern === 'cyber') {
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+                for (let i = 0; i < paddle.width - 20; i += 20) {
+                    const x = paddle.x + 10 + i;
+                    ctx.beginPath();
+                    ctx.rect(x, paddle.y + 3, 10, paddle.height - 6);
+                    ctx.fill();
+                }
+            } else if (style.pattern === 'cosmic') {
+                for (let i = 0; i < 3; i++) {
+                    const x = paddle.x + paddle.width * (i + 1) / 4;
+                    ctx.beginPath();
+                    ctx.arc(x, paddle.y + paddle.height / 2, 3 + Math.sin(paddle.time + i) * 2, 0, Math.PI * 2);
+                    ctx.fillStyle = `rgba(255, 255, 255, ${0.5 + Math.sin(paddle.time + i) * 0.3})`;
+                    ctx.fill();
+                }
+            } else if (style.pattern === 'pastel') {
+                ctx.beginPath();
+                ctx.moveTo(paddle.x + paddle.width / 2, paddle.y + paddle.height / 2);
+                for (let i = 0; i < 6; i++) {
+                    const angle = (Math.PI * 2 / 6) * i + paddle.time * 0.5;
+                    const r = 8 + Math.sin(paddle.time * 2 + i) * 3;
+                    ctx.lineTo(
+                        paddle.x + paddle.width / 2 + Math.cos(angle) * r,
+                        paddle.y + paddle.height / 2 + Math.sin(angle) * r
+                    );
+                }
+                ctx.closePath();
+                ctx.strokeStyle = 'rgba(255, 255, 255, 0.8)';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+            }
+            
+            ctx.shadowBlur = 0;
+            
+            // 高光
+            const highlightGradient = ctx.createLinearGradient(
+                paddle.x + 5, paddle.y + 2,
+                paddle.x + 5, paddle.y + paddle.height - 2
+            );
+            highlightGradient.addColorStop(0, 'rgba(255, 255, 255, 0.5)');
+            highlightGradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
+            ctx.beginPath();
+            ctx.roundRect(paddle.x + 5, paddle.y + 2, 4, paddle.height - 4, 2);
+            ctx.fillStyle = highlightGradient;
+            ctx.fill();
+        }
+
+        // 绘制爆炸效果
+        function drawExplosions() {
+            explosions.forEach(exp => {
+                exp.particles.forEach(p => {
+                    ctx.beginPath();
+                    ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+                    ctx.fillStyle = `rgba(${p.color}, ${p.alpha})`;
+
+                    // 炸弹爆炸时的额外发光效果
+                    if (exp.isBomb) {
+                        ctx.shadowColor = `rgba(${p.color}, ${p.alpha * 0.8})`;
+                        ctx.shadowBlur = 10;
+                    }
+
+                    ctx.fill();
+                    ctx.shadowBlur = 0;
+                });
+
+                // 炸弹爆炸时的中心冲击波
+                if (exp.isBomb && exp.age < 15) {
+                    const shockwaveRadius = (exp.age * 15);
+                    const shockwaveAlpha = 1 - (exp.age / 15);
+
+                    ctx.beginPath();
+                    ctx.arc(
+                        exp.particles[0].x,
+                        exp.particles[0].y,
+                        shockwaveRadius,
+                        0,
+                        Math.PI * 2
+                    );
+                    ctx.strokeStyle = `rgba(255, 150, 0, ${shockwaveAlpha * 0.5})`;
+                    ctx.lineWidth = 4;
+                    ctx.stroke();
+
+                    ctx.beginPath();
+                    ctx.arc(
+                        exp.particles[0].x,
+                        exp.particles[0].y,
+                        shockwaveRadius * 0.6,
+                        0,
+                        Math.PI * 2
+                    );
+                    ctx.strokeStyle = `rgba(255, 200, 0, ${shockwaveAlpha * 0.3})`;
+                    ctx.lineWidth = 3;
+                    ctx.stroke();
+                }
+            });
+        }
+
+        // 绘制炸弹
+        function drawBombs() {
+            bombs.forEach(bomb => {
+                const isDroneMissile = bomb.isDroneMissile;
+
+                if (isDroneMissile) {
+                    // 导弹外观（科技感）
+                    const pulseIntensity = 0.7 + Math.sin(Date.now() * 0.015) * 0.3;
+                    ctx.shadowColor = `rgba(0, 255, 255, ${pulseIntensity})`;
+                    ctx.shadowBlur = 20 + Math.sin(Date.now() * 0.015) * 8;
+
+                    // 导弹主体（长椭圆）
+                    ctx.beginPath();
+                    ctx.ellipse(bomb.x, bomb.y, bomb.radius * 0.8, bomb.radius, 0, 0, Math.PI * 2);
+                    const missileGradient = ctx.createLinearGradient(bomb.x, bomb.y - bomb.radius, bomb.x, bomb.y + bomb.radius);
+                    missileGradient.addColorStop(0, '#4a90e2');
+                    missileGradient.addColorStop(0.5, '#2c5aa0');
+                    missileGradient.addColorStop(1, '#1e3a5f');
+                    ctx.fillStyle = missileGradient;
+                    ctx.fill();
+
+                    // 导弹边框
+                    ctx.strokeStyle = '#5dade2';
+                    ctx.lineWidth = 2;
+                    ctx.stroke();
+
+                    // 导弹头部
+                    ctx.beginPath();
+                    ctx.moveTo(bomb.x - bomb.radius * 0.8, bomb.y - bomb.radius * 0.3);
+                    ctx.lineTo(bomb.x, bomb.y - bomb.radius - 5);
+                    ctx.lineTo(bomb.x + bomb.radius * 0.8, bomb.y - bomb.radius * 0.3);
+                    ctx.closePath();
+                    ctx.fillStyle = '#2ecc71';
+                    ctx.fill();
+
+                    // 导弹尾部喷射
+                    const exhaustX = bomb.x;
+                    const exhaustY = bomb.y + bomb.radius;
+
+                    // 尾焰核心
+                    const exhaustGradient = ctx.createRadialGradient(exhaustX, exhaustY, 0, exhaustX, exhaustY + 30, 30);
+                    exhaustGradient.addColorStop(0, '#ffffff');
+                    exhaustGradient.addColorStop(0.2, '#00ffff');
+                    exhaustGradient.addColorStop(0.5, '#0099ff');
+                    exhaustGradient.addColorStop(1, 'rgba(0, 100, 200, 0)');
+
+                    ctx.beginPath();
+                    ctx.ellipse(exhaustX, exhaustY + 15, 12, 25, 0, 0, Math.PI * 2);
+                    ctx.fillStyle = exhaustGradient;
+                    ctx.fill();
+
+                    // 尾焰粒子
+                    for (let i = 0; i < 5; i++) {
+                        const particleAngle = (Math.PI / 2 + (Math.random() - 0.5) * 0.5);
+                        const particleDist = 25 + Math.random() * 20;
+                        const particleX = exhaustX + Math.sin(particleAngle) * (Math.random() - 0.5) * 20;
+                        const particleY = exhaustY + particleDist;
+
+                        ctx.beginPath();
+                        ctx.arc(particleX, particleY, 2 + Math.random() * 2, 0, Math.PI * 2);
+                        ctx.fillStyle = `rgba(0, 255, 255, ${0.8 - particleDist / 45})`;
+                        ctx.fill();
+                    }
+
+                    // 导弹侧翼
+                    ctx.fillStyle = '#1e3a5f';
+                    ctx.strokeStyle = '#5dade2';
+                    ctx.lineWidth = 1;
+
+                    // 左翼
+                    ctx.beginPath();
+                    ctx.moveTo(bomb.x - bomb.radius * 0.5, bomb.y + bomb.radius * 0.5);
+                    ctx.lineTo(bomb.x - bomb.radius * 1.2, bomb.y + bomb.radius + 8);
+                    ctx.lineTo(bomb.x - bomb.radius * 0.3, bomb.y + bomb.radius * 0.8);
+                    ctx.closePath();
+                    ctx.fill();
+                    ctx.stroke();
+
+                    // 右翼
+                    ctx.beginPath();
+                    ctx.moveTo(bomb.x + bomb.radius * 0.5, bomb.y + bomb.radius * 0.5);
+                    ctx.lineTo(bomb.x + bomb.radius * 1.2, bomb.y + bomb.radius + 8);
+                    ctx.lineTo(bomb.x + bomb.radius * 0.3, bomb.y + bomb.radius * 0.8);
+                    ctx.closePath();
+                    ctx.fill();
+                    ctx.stroke();
+
+                    // 导弹上的科技图案
+                    ctx.strokeStyle = '#00ffff';
+                    ctx.lineWidth = 1;
+                    ctx.beginPath();
+                    ctx.moveTo(bomb.x - 5, bomb.y - 5);
+                    ctx.lineTo(bomb.x + 5, bomb.y);
+                    ctx.lineTo(bomb.x - 5, bomb.y + 5);
+                    ctx.stroke();
+
+                    // 导弹尾部的警示灯
+                    const blink = Math.sin(Date.now() / 80) > 0;
+                    ctx.beginPath();
+                    ctx.arc(bomb.x, bomb.y + bomb.radius - 5, 3, 0, Math.PI * 2);
+                    ctx.fillStyle = blink ? '#ff0000' : '#660000';
+                    ctx.fill();
+
+                } else {
+                    // 真实炸弹（高爆炸弹样式）
+                    
+                    // 炸弹主体（圆柱形）
+                    const bodyWidth = bomb.radius * 1.6;
+                    const bodyHeight = bomb.radius * 2;
+                    const bodyX = bomb.x - bodyWidth / 2;
+                    const bodyY = bomb.y - bodyHeight / 2;
+
+                    // 弹体渐变（军用橄榄绿/深灰色）
+                    const bodyGradient = ctx.createLinearGradient(bodyX, bodyY, bodyX + bodyWidth, bodyY);
+                    bodyGradient.addColorStop(0, '#3d3d3d');
+                    bodyGradient.addColorStop(0.3, '#4a4a4a');
+                    bodyGradient.addColorStop(0.5, '#2d2d2d');
+                    bodyGradient.addColorStop(0.7, '#4a4a4a');
+                    bodyGradient.addColorStop(1, '#3d3d3d');
+                    
+                    ctx.beginPath();
+                    ctx.ellipse(bodyX, bodyY + bodyHeight / 2, 8, bodyHeight / 2, 0, 0, Math.PI * 2);
+                    ctx.fill();
+                    
+                    ctx.fillStyle = bodyGradient;
+                    ctx.fillRect(bodyX, bodyY, bodyWidth, bodyHeight);
+                    
+                    ctx.beginPath();
+                    ctx.ellipse(bodyX + bodyWidth, bodyY + bodyHeight / 2, 8, bodyHeight / 2, 0, 0, Math.PI * 2);
+                    ctx.fill();
+
+                    // 弹体顶部圆形
+                    ctx.beginPath();
+                    ctx.ellipse(bomb.x, bodyY, bodyWidth / 2, 8, 0, 0, Math.PI * 2);
+                    ctx.fillStyle = '#4a4a4a';
+                    ctx.fill();
+
+                    // 弹体底部圆形
+                    ctx.beginPath();
+                    ctx.ellipse(bomb.x, bodyY + bodyHeight, bodyWidth / 2, 8, 0, 0, Math.PI * 2);
+                    ctx.fillStyle = '#2d2d2d';
+                    ctx.fill();
+
+                    // 弹体金属光泽
+                    ctx.strokeStyle = 'rgba(255, 255, 255, 0.15)';
+                    ctx.lineWidth = 2;
+                    ctx.beginPath();
+                    ctx.moveTo(bodyX + bodyWidth * 0.25, bodyY);
+                    ctx.lineTo(bodyX + bodyWidth * 0.25, bodyY + bodyHeight);
+                    ctx.stroke();
+
+                    // 炸弹引信管（金属色）
+                    const fuseWidth = 12;
+                    const fuseHeight = 25;
+                    const fuseX = bomb.x - fuseWidth / 2;
+                    const fuseY = bodyY - fuseHeight;
+
+                    ctx.fillStyle = '#5a5a5a';
+                    ctx.fillRect(fuseX, fuseY, fuseWidth, fuseHeight);
+                    
+                    // 引信管螺纹
+                    ctx.strokeStyle = '#4a4a4a';
+                    ctx.lineWidth = 1;
+                    for (let i = 0; i < 4; i++) {
+                        ctx.beginPath();
+                        ctx.moveTo(fuseX, fuseY + 5 + i * 5);
+                        ctx.lineTo(fuseX + fuseWidth, fuseY + 5 + i * 5);
+                        ctx.stroke();
+                    }
+
+                    // 引信管顶部
+                    ctx.beginPath();
+                    ctx.arc(bomb.x, fuseY, fuseWidth / 2, 0, Math.PI * 2);
+                    const fuseTopGradient = ctx.createRadialGradient(bomb.x - 2, fuseY - 2, 0, bomb.x, fuseY, fuseWidth / 2);
+                    fuseTopGradient.addColorStop(0, '#6a6a6a');
+                    fuseTopGradient.addColorStop(1, '#4a4a4a');
+                    ctx.fillStyle = fuseTopGradient;
+                    ctx.fill();
+
+                    // 真实的引线（燃着的导火索）
+                    const fuseEndX = bomb.x;
+                    const fuseEndY = fuseY;
+                    
+                    // 引线路径（弯曲的，像真实的导火索）
+                    ctx.beginPath();
+                    ctx.moveTo(fuseEndX, fuseEndY);
+                    ctx.quadraticCurveTo(
+                        fuseEndX + 8,
+                        fuseEndY - 10,
+                        fuseEndX + 3,
+                        fuseEndY - 20
+                    );
+                    ctx.quadraticCurveTo(
+                        fuseEndX - 5,
+                        fuseEndY - 28,
+                        fuseEndX + 2,
+                        fuseEndY - 35
+                    );
+                    
+                    // 引线渐变（从金属色到燃烧色）
+                    const fuseGradient = ctx.createLinearGradient(fuseEndX, fuseEndY, fuseEndX + 2, fuseEndY - 35);
+                    fuseGradient.addColorStop(0, '#8b7355');
+                    fuseGradient.addColorStop(0.6, '#6b5344');
+                    fuseGradient.addColorStop(1, '#4b3324');
+                    ctx.strokeStyle = fuseGradient;
+                    ctx.lineWidth = 3;
+                    ctx.lineCap = 'round';
+                    ctx.stroke();
+
+                    // 引线燃烧端点（正在燃烧的火星）
+                    const burningX = fuseEndX + 2;
+                    const burningY = fuseEndY - 35;
+
+                    // 燃烧核心（白色到黄色）
+                    const burnCoreGradient = ctx.createRadialGradient(burningX, burningY, 0, burningX, burningY, 6);
+                    burnCoreGradient.addColorStop(0, '#ffffff');
+                    burnCoreGradient.addColorStop(0.3, '#ffff00');
+                    burnCoreGradient.addColorStop(0.7, '#ff8800');
+                    burnCoreGradient.addColorStop(1, 'rgba(255, 68, 0, 0)');
+                    
+                    ctx.beginPath();
+                    ctx.arc(burningX, burningY, 6, 0, Math.PI * 2);
+                    ctx.fillStyle = burnCoreGradient;
+                    ctx.fill();
+
+                    // 燃烧火星（真实的火花效果）
+                    const sparkCount = 12;
+                    for (let i = 0; i < sparkCount; i++) {
+                        const angle = (Math.PI * 2 / sparkCount) * i + Date.now() * 0.02;
+                        const distance = 8 + Math.random() * 8;
+                        const sparkX = burningX + Math.cos(angle) * distance;
+                        const sparkY = burningY + Math.sin(angle) * distance - 3;
+                        const sparkSize = 1 + Math.random() * 2;
+                        
+                        ctx.beginPath();
+                        ctx.arc(sparkX, sparkY, sparkSize, 0, Math.PI * 2);
+                        const sparkColors = ['#ffffff', '#ffff00', '#ff8800', '#ff4400'];
+                        ctx.fillStyle = sparkColors[Math.floor(Math.random() * sparkColors.length)];
+                        ctx.fill();
+                    }
+
+                    // 升腾的烟（真实烟雾效果）
+                    for (let i = 0; i < 5; i++) {
+                        const smokeAngle = -Math.PI / 2 + (Math.random() - 0.5) * 0.5;
+                        const smokeDist = 15 + Math.random() * 10;
+                        const smokeX = burningX + Math.cos(smokeAngle) * smokeDist;
+                        const smokeY = burningY + Math.sin(smokeAngle) * smokeDist;
+                        const smokeSize = 3 + Math.random() * 3;
+                        
+                        ctx.beginPath();
+                        ctx.arc(smokeX, smokeY, smokeSize, 0, Math.PI * 2);
+                        ctx.fillStyle = `rgba(100, 100, 100, ${0.3 + Math.random() * 0.2})`;
+                        ctx.fill();
+                    }
+
+                    // 炸弹上的警告标识（骷髅头）
+                    ctx.fillStyle = '#ff4444';
+                    ctx.font = 'bold 10px Arial';
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillText('⚠', bomb.x, bodyY + bodyHeight / 2);
+
+                    // 军用编号
+                    ctx.fillStyle = '#ffffff';
+                    ctx.font = '6px Arial';
+                    ctx.textAlign = 'center';
+                    ctx.fillText('M-67', bomb.x, bodyY + bodyHeight / 2 + 12);
+
+                    // 弹体纹理（凹凸感）
+                    ctx.strokeStyle = 'rgba(0, 0, 0, 0.3)';
+                    ctx.lineWidth = 1;
+                    for (let i = 0; i < 3; i++) {
+                        ctx.beginPath();
+                        ctx.moveTo(bodyX + 5, bodyY + 10 + i * 8);
+                        ctx.lineTo(bodyX + bodyWidth - 5, bodyY + 10 + i * 8);
+                        ctx.stroke();
+                    }
+                        const sparkSparkleX = sparkX + Math.cos(angle) * distance;
+                        const sparkSparkleY = sparkY - 10 + Math.sin(angle) * distance * 0.4;
+
+                        ctx.beginPath();
+                        ctx.arc(sparkSparkleX, sparkSparkleY, 1 + Math.random() * 1, 0, Math.PI * 2);
+                        const randomColor = Math.random();
+                        ctx.fillStyle = randomColor < 0.3 ? '#ffcc00' : randomColor < 0.6 ? '#ff9900' : '#ff6600';
+                        ctx.fill();
+                    }
+
+                    // 火星四溅效果（随机方向的火星）
+                    const sparkleCount = 6;
+                    for (let i = 0; i < sparkleCount; i++) {
+                        const sparkleAngle = (Math.PI * 2 / sparkleCount) * i + Date.now() * 0.01;
+                        const sparkleDist = 30 + Math.sin(Date.now() * 0.05 + i * 2) * 15;
+                        const sparkleX = sparkX + Math.cos(sparkleAngle) * sparkleDist;
+                        const sparkleY = sparkY - 15 + Math.sin(sparkleAngle) * sparkleDist * 0.3;
+
+                        // 绘制小火星
+                        ctx.beginPath();
+                        ctx.arc(sparkleX, sparkleY, 2 + Math.random(), 0, Math.PI * 2);
+                        ctx.fillStyle = '#ffffff';
+                        ctx.shadowColor = '#ff6600';
+                        ctx.shadowBlur = 6;
+                        ctx.fill();
+                        ctx.shadowBlur = 0;
+                    }
+
+                    // 尾迹效果（更明显）
+                    for (let i = 0; i < 4; i++) {
+                        const trailY = sparkY - i * 4;
+                        const trailAlpha = 0.9 - i * 0.2;
+                        const trailSize = 8 - i * 1.5;
+
+                        ctx.beginPath();
+                        ctx.arc(sparkX + Math.sin(Date.now() * 0.015 + i) * 3, trailY, trailSize, 0, Math.PI * 2);
+                        const trailGradient = ctx.createRadialGradient(
+                            sparkX + Math.sin(Date.now() * 0.015 + i) * 3, trailY, 0,
+                            sparkX + Math.sin(Date.now() * 0.015 + i) * 3, trailY, trailSize
+                        );
+                        trailGradient.addColorStop(0, `rgba(255, 200, 0, ${trailAlpha})`);
+                        trailGradient.addColorStop(1, `rgba(255, 50, 0, ${trailAlpha * 0.5})`);
+                        ctx.fillStyle = trailGradient;
+                        ctx.fill();
+                    }
+
+                    // 火焰闪烁
+                    const flickerAlpha = 0.8 + Math.sin(Date.now() * 0.03) * 0.2;
+                    ctx.globalAlpha = flickerAlpha;
+                    ctx.beginPath();
+                    ctx.arc(sparkX, sparkY, 15, 0, Math.PI * 2);
+                    ctx.fillStyle = 'rgba(255, 200, 0, 0.3)';
+                    ctx.fill();
+                    ctx.globalAlpha = 1;
+                }
+            });
+        }
+
+        // 绘制小白球
+        function drawSmallBalls() {
+            smallBalls.forEach(ball => {
+                // 发光效果
+                const glowGradient = ctx.createRadialGradient(
+                    ball.x, ball.y, 0,
+                    ball.x, ball.y, ball.radius * 2
+                );
+                glowGradient.addColorStop(0, 'rgba(255, 255, 255, 0.5)');
+                glowGradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
+                ctx.beginPath();
+                ctx.arc(ball.x, ball.y, ball.radius * 2, 0, Math.PI * 2);
+                ctx.fillStyle = glowGradient;
+                ctx.fill();
+                
+                // 球体
+                const gradient = ctx.createRadialGradient(
+                    ball.x - ball.radius / 3,
+                    ball.y - ball.radius / 3,
+                    0,
+                    ball.x,
+                    ball.y,
+                    ball.radius
+                );
+                gradient.addColorStop(0, '#ffffff');
+                gradient.addColorStop(1, '#b0b0b0');
+                
+                ctx.beginPath();
+                ctx.arc(ball.x, ball.y, ball.radius, 0, Math.PI * 2);
+                ctx.fillStyle = gradient;
+                ctx.fill();
+                
+                // 高光
+                ctx.beginPath();
+                ctx.arc(ball.x - ball.radius / 3, ball.y - ball.radius / 3, ball.radius / 4, 0, Math.PI * 2);
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+                ctx.fill();
+            });
+        }
+
+        // 更新游戏逻辑
+        function update() {
+            // 更新天气粒子
+            if (weather === 'rain') {
+                weatherParticles.forEach(particle => {
+                    particle.y += particle.speed;
+                    if (particle.y > canvas.height) {
+                        particle.y = -particle.length;
+                        particle.x = Math.random() * canvas.width;
+                    }
+                });
+            } else if (weather === 'snow') {
+                weatherParticles.forEach(particle => {
+                    particle.y += particle.speed;
+                    particle.x += particle.drift;
+                    if (particle.y > canvas.height) {
+                        particle.y = -particle.radius;
+                        particle.x = Math.random() * canvas.width;
+                    }
+                    if (particle.x < 0 || particle.x > canvas.width) {
+                        particle.drift = -particle.drift;
+                    }
+                });
+            }
+
+            // 更新爆炸效果
+            updateExplosions();
+
+            // 更新小白球
+            updateSmallBalls();
+
+            // 更新炸弹位置和检测
+            updateBombs();
+
+            // 更新无人机和子弹
+            updateDronesAndBullets();
+
+            if (gameState !== 'playing') return;
+
+            // 移动挡板
+            if (leftPressed && paddle.x > 0) {
+                paddle.x -= paddle.speed;
+            }
+            if (rightPressed && paddle.x < canvas.width - paddle.width) {
+                paddle.x += paddle.speed;
+            }
+
+            // 更新白球位置
+            if (whiteBall.active) {
+                whiteBall.vy += GRAVITY;
+                whiteBall.x += whiteBall.vx;
+                whiteBall.y += whiteBall.vy;
+
+                // 左右边界碰撞
+                if (whiteBall.x - whiteBall.radius < 0 || whiteBall.x + whiteBall.radius > canvas.width) {
+                    playWallSound();
+                    whiteBall.vx = -whiteBall.vx;
+                    if (whiteBall.x - whiteBall.radius < 0) {
+                        whiteBall.x = whiteBall.radius;
+                    }
+                    if (whiteBall.x + whiteBall.radius > canvas.width) {
+                        whiteBall.x = canvas.width - whiteBall.radius;
+                    }
+                }
+
+                // 上边界碰撞
+                if (whiteBall.y - whiteBall.radius < 0) {
+                    playWallSound();
+                    whiteBall.vy = -whiteBall.vy;
+                    whiteBall.y = whiteBall.radius;
+                }
+
+                // 检测挡板碰撞
+                if (whiteBall.y + whiteBall.radius > paddle.y &&
+                    whiteBall.y - whiteBall.radius < paddle.y + paddle.height &&
+                    whiteBall.x > paddle.x &&
+                    whiteBall.x < paddle.x + paddle.width) {
+                    
+                    playPaddleSound();
+                    whiteBall.vy = BOUNCE_POWER;
+                    const hitPos = (whiteBall.x - paddle.x) / paddle.width;
+                    whiteBall.vx = (hitPos - 0.5) * 8;
+                    whiteBall.y = paddle.y - whiteBall.radius;
+                }
+
+                // 检测目标碰撞
+                redBalls.forEach(ball => {
+                    if (ball.visible) {
+                        const dx = whiteBall.x - ball.x;
+                        const dy = whiteBall.y - ball.y;
+                        const distance = Math.sqrt(dx * dx + dy * dy);
+                        
+                        if (distance < whiteBall.radius + ball.radius) {
+                            ball.visible = false;
+                            playHitSound();
+                            playExplosionSound();
+                            playGrowSound();
+                            paddle.width = Math.min(paddle.width + 5, 400);
+                            createExplosion(ball.x, ball.y);
+                            const angle = Math.atan2(dy, dx);
+                            whiteBall.vx = Math.cos(angle) * 5;
+                            whiteBall.vy = Math.sin(angle) * 5;
+                            checkBallSpawn();
+                        }
+                    }
+                });
+
+                // 检测无人机碰撞（白球打中无人机直接获胜）
+                drones.forEach((drone, droneIndex) => {
+                    const dx = whiteBall.x - drone.x;
+                    const dy = whiteBall.y - drone.y;
+                    const distance = Math.sqrt(dx * dx + dy * dy);
+                    
+                    if (distance < whiteBall.radius + 20) {
+                        stopBackgroundMusic();
+                        playWinSound();
+                        gameState = 'success';
+                        gameMessage.textContent = '🎯 完美击杀! 🎯';
+                        gameMessage.style.display = 'block';
+                        restartBtn.style.display = 'block';
+                        createExplosion(drone.x, drone.y);
+                    }
+                });
+
+                // 检查白球是否掉出底部
+                if (whiteBall.y - whiteBall.radius > canvas.height) {
+                    stopBackgroundMusic();
+                    playLoseSound();
+                    gameState = 'gameover';
+                    gameMessage.textContent = '失败';
+                    gameMessage.style.display = 'block';
+                    restartBtn.style.display = 'block';
+                }
+
+                // 检查是否所有目标都被打掉
+                const allGone = redBalls.every(ball => !ball.visible);
+                if (allGone) {
+                    stopBackgroundMusic();
+                    playWinSound();
+                    gameState = 'success';
+                    gameMessage.textContent = '🎉 完美通关! 🎉';
+                    gameMessage.style.display = 'block';
+                    restartBtn.style.display = 'block';
+                }
+            }
+        }
+
+        // 绘制游戏
+        function draw() {
+            drawBackground();
+            drawRedBalls();
+            drawExplosions();
+            drawBombs();
+            drawDrones();
+            drawBullets();
+            drawSmallBalls();
+            drawPaddle();
+            drawWhiteBall();
+        }
+
+        // 游戏循环
+        function gameLoop() {
+            update();
+            draw();
+            requestAnimationFrame(gameLoop);
+        }
+
+        // 创建爆炸效果
+        function createExplosion(x, y, isBomb = false) {
+            const particles = [];
+            const colors = ['255, 215, 0', '255, 165, 0', '255, 69, 0', '255, 255, 255'];
+            const bombColors = ['255, 100, 0', '255, 150, 0', '255, 50, 0', '255, 200, 50', '255, 255, 255'];
+            const particleColors = isBomb ? bombColors : colors;
+            const particleCount = isBomb ? 50 : 20;
+
+            for (let i = 0; i < particleCount; i++) {
+                const angle = (Math.PI * 2 / particleCount) * i;
+                const speed = isBomb ? 3 + Math.random() * 6 : 2 + Math.random() * 4;
+                particles.push({
+                    x: x,
+                    y: y,
+                    vx: Math.cos(angle) * speed,
+                    vy: Math.sin(angle) * speed,
+                    radius: isBomb ? 4 + Math.random() * 6 : 3 + Math.random() * 5,
+                    color: particleColors[Math.floor(Math.random() * particleColors.length)],
+                    alpha: 1,
+                    gravity: isBomb ? 0.15 : 0.1
+                });
+            }
+
+            explosions.push({
+                particles: particles,
+                age: 0,
+                isBomb: isBomb
+            });
+        }
+
+        // 更新爆炸效果
+        function updateExplosions() {
+            for (let i = explosions.length - 1; i >= 0; i--) {
+                const exp = explosions[i];
+                exp.age++;
+
+                exp.particles.forEach(p => {
+                    p.x += p.vx;
+                    p.y += p.vy;
+                    p.vy += p.gravity || 0.1;
+                    p.alpha -= exp.isBomb ? 0.015 : 0.02;
+                    p.radius *= 0.97;
+
+                    // 炸弹爆炸时粒子会闪烁
+                    if (exp.isBomb && p.alpha > 0.5) {
+                        p.radius *= (0.95 + Math.random() * 0.1);
+                    }
+                });
+
+                const maxAge = exp.isBomb ? 70 : 50;
+                if (exp.age > maxAge || exp.particles.every(p => p.alpha <= 0)) {
+                    explosions.splice(i, 1);
+                }
+            }
+        }
+
+        // 检查是否需要生成小白球
+        function checkBallSpawn() {
+            const broken = redBalls.filter(ball => !ball.visible).length;
+            const quarter = Math.floor(totalRedBalls / 4);
+            
+            for (let i = 0; i < 3; i++) {
+                const threshold = quarter * (i + 1);
+                if (broken >= threshold && !ballsSpawned[i]) {
+                    ballsSpawned[i] = true;
+                    playSpawnBallSound();
+                    smallBalls.push({
+                        x: canvas.width / 2,
+                        y: canvas.height / 3,
+                        radius: BALL_RADIUS * 0.7,
+                        vx: (Math.random() - 0.5) * 6,
+                        vy: 2 + Math.random() * 2
+                    });
+                }
+            }
+        }
+
+        // 更新小白球
+        function updateSmallBalls() {
+            for (let i = smallBalls.length - 1; i >= 0; i--) {
+                const ball = smallBalls[i];
+                ball.vy += GRAVITY;
+                ball.x += ball.vx;
+                ball.y += ball.vy;
+                
+                if (ball.x - ball.radius < 0 || ball.x + ball.radius > canvas.width) {
+                    playWallSound();
+                    ball.vx = -ball.vx;
+                }
+                
+                if (ball.y - ball.radius < 0) {
+                    playWallSound();
+                    ball.vy = -ball.vy;
+                }
+                
+                // 挡板碰撞
+                if (ball.y + ball.radius > paddle.y &&
+                    ball.y - ball.radius < paddle.y + paddle.height &&
+                    ball.x > paddle.x &&
+                    ball.x < paddle.x + paddle.width) {
+                    
+                    playPaddleSound();
+                    ball.vy = BOUNCE_POWER;
+                    const hitPos = (ball.x - paddle.x) / paddle.width;
+                    ball.vx = (hitPos - 0.5) * 8;
+                    ball.y = paddle.y - ball.radius;
+                }
+                
+                // 检测目标碰撞
+                redBalls.forEach(redBall => {
+                    if (redBall.visible) {
+                        const dx = ball.x - redBall.x;
+                        const dy = ball.y - redBall.y;
+                        const distance = Math.sqrt(dx * dx + dy * dy);
+                        
+                        if (distance < ball.radius + redBall.radius) {
+                            redBall.visible = false;
+                            playHitSound();
+                            playExplosionSound();
+                            playGrowSound();
+                            paddle.width = Math.min(paddle.width + 5, 400);
+                            createExplosion(redBall.x, redBall.y);
+                            
+                            const angle = Math.atan2(dy, dx);
+                            ball.vx = Math.cos(angle) * 5;
+                            ball.vy = Math.sin(angle) * 5;
+                            
+                            checkBallSpawn();
+                        }
+                    }
+                });
+                
+                if (ball.y - ball.radius > canvas.height) {
+                    smallBalls.splice(i, 1);
+                }
+            }
+        }
+
+        // 更新炸弹
+        function updateBombs() {
+            const brokenBalls = redBalls.filter(ball => !ball.visible).length;
+
+            // 只有当没有无人机时才生成普通炸弹
+            const hasDrones = drones.length > 0;
+            if (brokenBalls >= totalRedBalls / 3 && !hasDrones) {
+                bombSpawnTimer++;
+                if (bombSpawnTimer >= 180 && Math.random() < 0.3) {
+                    bombs.push({
+                        x: 50 + Math.random() * (canvas.width - 100),
+                        y: -30,
+                        radius: 5,
+                        speed: 2 + Math.random() * 2
+                    });
+                    bombSpawnTimer = 0;
+                }
+            }
+
+            for (let i = bombs.length - 1; i >= 0; i--) {
+                const bomb = bombs[i];
+
+                // 如果是无人机投放的导弹，跟踪挡板位置
+                if (bomb.isDroneMissile) {
+                    const targetX = paddle.x + paddle.width / 2;
+                    const dx = targetX - bomb.x;
+                    const horizontalSpeed = Math.abs(dx) * 0.03; // 跟踪速度，比挡板慢
+                    
+                    if (Math.abs(dx) > 1) {
+                        bomb.x += Math.sign(dx) * Math.min(horizontalSpeed, 3);
+                    }
+                }
+
+                bomb.y += bomb.speed;
+
+                if (bomb.y + bomb.radius > paddle.y &&
+                    bomb.y - bomb.radius < paddle.y + paddle.height &&
+                    bomb.x + bomb.radius > paddle.x &&
+                    bomb.x - bomb.radius < paddle.x + paddle.width) {
+
+                    playBombSound();
+                    playExplosionSound();
+                    playShrinkSound();
+                    paddle.width = Math.max(paddle.width * 0.75, 50);
+                    createExplosion(bomb.x, bomb.y, true);
+                    bombs.splice(i, 1);
+                    continue;
+                }
+
+                if (bomb.y - bomb.radius > canvas.height) {
+                    bombs.splice(i, 1);
+                }
+            }
+        }
+
+        // 更新无人机和导弹
+        function updateDronesAndBullets() {
+            const brokenBalls = redBalls.filter(ball => !ball.visible).length;
+            const progress = brokenBalls / totalRedBalls;
+
+            // 当进度超过50%时，开始生成无人机
+            if (progress > 0.5) {
+                droneSpawnTimer++;
+                if (droneSpawnTimer >= 200 && drones.length < 2) {
+                    drones.push({
+                        x: Math.random() * (canvas.width - 100) + 50,
+                        y: 100 + Math.random() * 100,
+                        rotation: 0,
+                        direction: Math.random() > 0.5 ? 1 : -1,
+                        shootTimer: 0,
+                        scale: 0.34
+                    });
+                    droneSpawnTimer = 0;
+                }
+            }
+
+            // 更新无人机
+            for (let i = drones.length - 1; i >= 0; i--) {
+                const drone = drones[i];
+
+                // 水平移动（加快速度）
+                drone.x += drone.direction * 2.5;
+
+                // 螺旋桨旋转
+                drone.rotation += 0.3;
+
+                // 边界反弹
+                if (drone.x < 50 || drone.x > canvas.width - 50) {
+                    drone.direction *= -1;
+                }
+
+                // 投弹计时
+                drone.shootTimer++;
+                if (drone.shootTimer >= 200) {
+                    // 播放导弹下落呼啸声
+                    playMissileFallSound();
+                    // 投放导弹（缩小尺寸）
+                    bombs.push({
+                        x: drone.x,
+                        y: drone.y + 45,
+                        radius: 6,
+                        speed: 3 + Math.random() * 2,
+                        isDroneMissile: true
+                    });
+                    drone.shootTimer = 0;
+                }
+            }
+
+            // 更新子弹（保留，以防有其他用途）
+            for (let i = bullets.length - 1; i >= 0; i--) {
+                const bullet = bullets[i];
+                bullet.y += bullet.vy;
+
+                // 检测子弹与挡板碰撞
+                if (bullet.y + 4 > paddle.y &&
+                    bullet.y - 4 < paddle.y + paddle.height &&
+                    bullet.x > paddle.x &&
+                    bullet.x < paddle.x + paddle.width) {
+
+                    // 挡板被击中
+                    paddle.width = Math.max(paddle.width * 0.95, 50);
+                    bullets.splice(i, 1);
+                    continue;
+                }
+
+                // 子弹出界
+                if (bullet.y > canvas.height) {
+                    bullets.splice(i, 1);
+                }
+            }
+        }
+
+        // 键盘事件
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') {
+                leftPressed = true;
+            }
+            if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') {
+                rightPressed = true;
+            }
+            if ((e.key === ' ' || e.key === 'Enter') && gameState === 'waiting') {
+                launchBall();
+            }
+        });
+
+        document.addEventListener('keyup', (e) => {
+            if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') {
+                leftPressed = false;
+            }
+            if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') {
+                rightPressed = false;
+            }
+        });
+
+        // 重新开始按钮
+        restartBtn.addEventListener('click', () => {
+            stopBackgroundMusic();
+            gameState = 'selector';
+            paddleSelector.classList.remove('hidden');
+            restartBtn.style.display = 'none';
+            startBtn.style.display = 'block';
+            startBtn.textContent = '开始游戏';
+        });
+
+        // 设置默认选中的主题
+        document.querySelector('#themeOptions .paddleOption[data-theme="emoji"]').style.borderColor = '#fff';
+        
+        // 初始化游戏但不开始
+        initGame();
+        
+        // 启动游戏循环
+        gameLoop();
+    </script>
+</body>
+</html>
